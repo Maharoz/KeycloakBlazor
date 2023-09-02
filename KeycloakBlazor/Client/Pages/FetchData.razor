@@ -1,0 +1,70 @@
+﻿@page "/fetchdata"
+@using KeycloakBlazor.Shared
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using System.Security.Claims
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Temp. (C)</th>
+                <th>Temp. (F)</th>
+                <th>Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var forecast in forecasts)
+            {
+                <tr>
+                    <td>@forecast.Date.ToShortDateString()</td>
+                    <td>@forecast.TemperatureC</td>
+                    <td>@forecast.TemperatureF</td>
+                    <td>@forecast.Summary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+@code {
+    private WeatherForecast[]? forecasts;
+    private IEnumerable<Claim> claims = Enumerable.Empty<Claim>();
+    protected override async Task OnInitializedAsync()
+    {
+        //var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        //var user = authenticationState.User;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            claims = user.Claims;
+        }
+        // Get the access token and refresh token
+        //var accessToken = authResult.Properties.GetTokenValue("access_token");
+        //var refreshToken = authResult.Properties.GetTokenValue("refresh_token");
+
+        //// Save the tokens to the user's session or database
+        //HttpContext.Session.SetString("access_token", accessToken);
+        // Retrieve the access token from the claims
+      //  var accessToken = user.GetTokenAsync("access_token");
+      //  var x = HttpContext.GetTokenAsync("Bearer", "access_token");
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+    }
+}
